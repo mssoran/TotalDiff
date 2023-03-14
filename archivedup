@@ -1,0 +1,78 @@
+#!/bin/bash
+
+_usage() {
+local USAGE=$(cat <<- END
+Usage:
+   archivedup --baseDir=<baseDir> files
+
+This is kind of "move to trash" command. Intention is to move duplicate files 
+into <baseDir>/archivedupDest directory preserving original relative path from
+<baseDir>.
+
+All the files must exist and be regular file
+All the files must be under baseDir directory tree
+The destination must not contain the file
+
+Moves all the files to baseDir/archivedupDest and preserves the directory tree
+
+END
+)
+    if [[ "$1" != "" ]]; then echo Error: $1 ; echo  ; fi
+    echo "$USAGE"
+    exit 1
+}
+
+
+[[ "$1" == "--baseDir="* ]] || _usage "--baseDir must be specified."
+
+
+baseDir=${1#--baseDir=}
+shift
+
+if [[ "$1" == "--dryrun" ]] ; then {
+    DRY_RUN=true
+    shift
+} fi
+
+[[ -d "$baseDir" ]] || _usage "baseDir is not a directory: $baseDir"
+
+baseDir=$(realpath $baseDir)/
+destDir=${baseDir}archivedupDest/
+
+[[ -d "$destDir" ]] || _usage "destDir '$destDir' doesn't exist. baseDir must have a dir named archivedupDest"
+
+echo Fun is starting....
+echo baseDir is $baseDir
+echo destDir is $destDir
+
+for i in "$@" ; do {
+    [[ -e "$i" ]] || _usage "Not existing file, or file is not a regular file: $i"
+}; done
+
+
+for i in "$@" ; do {
+    sourceFile=$(realpath "$i")
+    [[ "$sourceFile" == "$baseDir"* ]] || _usage "All files must be under baseDir '$baseDir'"
+    # find the path relative to baseDir
+    sourceFileRelativeToBaseDir=${sourceFile#$baseDir}
+    # find the relative directory
+    dirRelativeToBaseDir=${sourceFileRelativeToBaseDir%/*}
+    # echo dirRelativeToBaseDir is $dirRelativeToBaseDir
+    # echo I need dir for "$destDir$dirRelativeToBaseDir"
+    if [[ "$DRY_RUN" == "true" ]] ; then {
+        echo I will run: mkdir -p \"$destDir$dirRelativeToBaseDir\"
+    } else {
+        mkdir -p "$destDir$dirRelativeToBaseDir" || _usage "Failed to create directory"
+    } fi
+
+    # echo sourceFileRelativeToBaseDir is $sourceFileRelativeToBaseDir
+    [[ ! -e "$destDir$sourceFileRelativeToBaseDir" ]] || _usage "Destination file '$destDir$sourceFileRelativeToBaseDir' already exists"
+    if [[ "$DRY_RUN" == "true" ]] ; then {
+        echo I will run: mv -n -v \"$baseDir$sourceFileRelativeToBaseDir\" \"$destDir$sourceFileRelativeToBaseDir\"
+    } else {
+        mv -n -v "$baseDir$sourceFileRelativeToBaseDir" "$destDir$sourceFileRelativeToBaseDir" ||  _usage "move operation is failed"
+    } fi
+}; done
+
+
+
