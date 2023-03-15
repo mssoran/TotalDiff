@@ -16,7 +16,8 @@ public class TotalDiffConfig {
 
     // default buffer size
     public int fileReadBufferSize = 128 * 1024;
-    public int considerFileSize = 100 * (2 << 10);
+    //public int considerFileSize = 100 * (2 << 10);
+    public int considerFileSize = 0;
     public String[] considerDirExcludes = new String[] {
             ".git",
             "@eaDir",
@@ -34,7 +35,7 @@ public class TotalDiffConfig {
 
 
     // Config for graph generation and printing
-    public int weightThreshold = 10;
+    public int weightThreshold = 0;
     public boolean includePathInGraph = true;
     public boolean ignorePrintingNodesInSinglePath = true;
 

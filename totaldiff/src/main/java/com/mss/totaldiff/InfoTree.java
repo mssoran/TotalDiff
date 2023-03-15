@@ -43,9 +43,16 @@ public class InfoTree {
         filterForDirItem = new SimpleFilterForDirItem(config);
     }
 
+    private String getNameMapKey(DirItem parent, String name) {
+        return parent.getId() + "|" + name;
+    }
+    private String getNameMapKey(FileItemBase file) {
+        return getNameMapKey(file.parentDir, file.name);
+    }
+
     private DirItem ensureDirItem(String dirName, DirItem parent, Iterable<ItemVisitor> visitors) {
         // check if we already have this dirItem (probably from an input file)
-        DirItem dirItem = dirsNameMap.get(parent.getId()+"|"+dirName);
+        DirItem dirItem = dirsNameMap.get(getNameMapKey(parent, dirName));
         if (dirItem == null) {
             dirItem = new DirItem(itemCount++, dirName, parent);
             addDir(dirItem, visitors);
@@ -130,7 +137,7 @@ public class InfoTree {
         if (!filterForDirItem.isValidToConsider(dirItem) || dirItem.getParentDir() == null) return;
         dirs.addLast(dirItem);
         dirsMap.put(dirItem.id, dirItem);
-        dirsNameMap.put(dirItem.getParentDir().getId()+"|"+dirItem.name, dirItem);
+        dirsNameMap.put(getNameMapKey(dirItem), dirItem);
         for (ItemVisitor visitor : visitors) {
             dirItem.visitItem(visitor);
         }
@@ -138,7 +145,7 @@ public class InfoTree {
 
     private boolean isOkToAddFile(FileItem fileItem) {
         if(fileItem.getParentDir() == null) return false;
-        if (filesNameMap.containsKey(fileItem.getParentDir().getId()+"|"+fileItem.name)) return false;
+        if (filesNameMap.containsKey(getNameMapKey(fileItem))) return false;
         return (filterForFileItem.isValidToConsider(fileItem));
     }
 
@@ -151,7 +158,7 @@ public class InfoTree {
         if (!isOkToAddFile(fileItem)) return;
         files.addLast(fileItem);
         totalProcessedFileSize += fileItem.size;
-        filesNameMap.put(fileItem.getParentDir().getId()+"|"+fileItem.name, fileItem);
+        filesNameMap.put(getNameMapKey(fileItem), fileItem);
         for(ItemVisitor visitor : visitors) {
             fileItem.visitItem(visitor);
         }
