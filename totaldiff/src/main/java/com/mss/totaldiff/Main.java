@@ -1,15 +1,9 @@
 package com.mss.totaldiff;
 
-import com.mss.totaldiff.graph.DuplicatesAsEdgeGraphGenerator;
-import com.mss.totaldiff.graph.DuplicatesAsNodeGraphGenerator;
 import com.mss.totaldiff.graph.AnalyzeOutputGenerator;
 import com.mss.totaldiff.graph.LargeDirPrinter;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.logging.Logger;
-
 public class Main {
 
     private static Logger logger = Logger.getLogger(Main.class.getName());

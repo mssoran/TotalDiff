@@ -43,43 +43,6 @@ public class InfoTree {
         filterForDirItem = new SimpleFilterForDirItem(config);
     }
 
-    public void addFromFile(String inputFileName, Iterable<ItemVisitor> visitors) throws IOException {
-        if (inputFileName == null || inputFileName.isEmpty()) return;
-        File inputFile = new File(inputFileName);
-        if (!inputFile.exists() || !inputFile.isFile()) throw new IOException("Input file '" + inputFile.getAbsolutePath() +"' doesn't exist");
-
-        FileReader fileReader = null;
-        BufferedReader bufferedReader = null;
-        try {
-            try {
-                fileReader = new FileReader(inputFileName);
-                bufferedReader = new BufferedReader(fileReader);
-                String line;
-
-                while ((line = bufferedReader.readLine()) != null) {
-                    if (line.startsWith("d")) {
-                        DirItem dirItem = FileSerializerVisitor.deserializeDirItemFromString(line, this);
-                        if (dirItem.id >= itemCount) itemCount = dirItem.id + 1;
-                        addDir(dirItem, visitors);
-                    } else if (line.startsWith("f")) {
-                        FileItem fileItem = FileSerializerVisitor.deserializeFileItemFromString(line, this);
-                        if (fileItem.id >= itemCount) itemCount = fileItem.id + 1;
-                        addFile(fileItem, visitors);
-                    } else {
-                        throw new RuntimeException("Unknown line is read from input file: " + line);
-                    }
-                }
-            } finally {
-                if (bufferedReader != null) bufferedReader.close();
-                if (fileReader != null) fileReader.close();
-            }
-        } catch (IOException ex) {
-            logger.severe("Failed to read from input..." + inputFile.getAbsolutePath());
-            ex.printStackTrace();
-            throw new IOException("Failed to read from input file " + inputFile.getAbsolutePath(), ex);
-        }
-    }
-
     private DirItem ensureDirItem(String dirName, DirItem parent, Iterable<ItemVisitor> visitors) {
         // check if we already have this dirItem (probably from an input file)
         DirItem dirItem = dirsNameMap.get(parent.getId()+"|"+dirName);
@@ -158,7 +121,12 @@ public class InfoTree {
         return dirsMap.get(aID);
     }
 
+    public void addDeserializedDir(DirItem dirItem, Iterable<ItemVisitor> visitors) {
+        addDir(dirItem, visitors);
+    }
+
     private void addDir(DirItem dirItem, Iterable<ItemVisitor> visitors) {
+        if (dirItem.id >= itemCount) itemCount = dirItem.id + 1;
         if (!filterForDirItem.isValidToConsider(dirItem) || dirItem.getParentDir() == null) return;
         dirs.addLast(dirItem);
         dirsMap.put(dirItem.id, dirItem);
@@ -173,7 +141,13 @@ public class InfoTree {
         if (filesNameMap.containsKey(fileItem.getParentDir().getId()+"|"+fileItem.name)) return false;
         return (filterForFileItem.isValidToConsider(fileItem));
     }
+
+    public void addDeserializedFile(FileItem fileItem, Iterable<ItemVisitor> visitors) {
+        addFile(fileItem, visitors);
+    }
+
     private void addFile(FileItem fileItem, Iterable<ItemVisitor> visitors) {
+        if (fileItem.id >= itemCount) itemCount = fileItem.id + 1;
         if (!isOkToAddFile(fileItem)) return;
         files.addLast(fileItem);
         totalProcessedFileSize += fileItem.size;

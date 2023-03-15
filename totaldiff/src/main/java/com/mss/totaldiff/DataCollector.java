@@ -2,6 +2,7 @@ package com.mss.totaldiff;
 
 import com.mss.totaldiff.visitors.FileSerializerVisitor;
 import com.mss.totaldiff.visitors.ItemVisitor;
+import com.mss.totaldiff.visitors.JsonSerializerVisitor;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +20,7 @@ public class DataCollector {
     }
 
     public void constructTree(String inputFileName) throws IOException {
-        FileSerializerVisitor fileSerializerVisitor = null;
+        ItemVisitor fileSerializerVisitor = null;
         try {
             // build visitors
             LinkedList<ItemVisitor> visitors = new LinkedList<>();
@@ -29,14 +30,16 @@ public class DataCollector {
                     File outputFile = new File(config.infoTreeOutputFileName);
                     if (!config.overwriteInfoTreeOutputFile && outputFile.exists())
                         throw new RuntimeException("Output file already exists:" + outputFile.getAbsolutePath());
-                    fileSerializerVisitor = new FileSerializerVisitor(outputFile);
+                    //fileSerializerVisitor = new FileSerializerVisitor(outputFile);
+                    fileSerializerVisitor = new JsonSerializerVisitor(outputFile);
                     visitors.addLast(fileSerializerVisitor);
                 } catch (IOException ex) {
                     throw new RuntimeException("Output file problem!" + ex);
                 }
             }
 
-            infoTree.addFromFile(inputFileName, visitors);
+            // FileSerializerVisitor.addFromFile(inputFileName, visitors, infoTree);
+            JsonSerializerVisitor.addFromFile(inputFileName, visitors, infoTree);
 
             long startTime = System.nanoTime();
             for (String topDir : config.dirs) {

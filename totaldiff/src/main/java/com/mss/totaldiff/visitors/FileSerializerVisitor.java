@@ -68,4 +68,39 @@ public class FileSerializerVisitor implements ItemVisitor, Closeable {
     public void close() throws IOException {
         writer.close();
     }
+
+    public static void addFromFile(String inputFileName, Iterable<ItemVisitor> visitors, InfoTree infoTree) throws IOException {
+        if (inputFileName == null || inputFileName.isEmpty()) return;
+        File inputFile = new File(inputFileName);
+        if (!inputFile.exists() || !inputFile.isFile()) throw new IOException("Input file '" + inputFile.getAbsolutePath() +"' doesn't exist");
+
+        FileReader fileReader = null;
+        BufferedReader bufferedReader = null;
+        try {
+            try {
+                fileReader = new FileReader(inputFileName);
+                bufferedReader = new BufferedReader(fileReader);
+                String line;
+
+                while ((line = bufferedReader.readLine()) != null) {
+                    if (line.startsWith("d")) {
+                        DirItem dirItem = FileSerializerVisitor.deserializeDirItemFromString(line, infoTree);
+                        infoTree.addDeserializedDir(dirItem, visitors);
+                    } else if (line.startsWith("f")) {
+                        FileItem fileItem = FileSerializerVisitor.deserializeFileItemFromString(line, infoTree);
+                        infoTree.addDeserializedFile(fileItem, visitors);
+                    } else {
+                        throw new RuntimeException("Unknown line is read from input file: " + line);
+                    }
+                }
+            } finally {
+                if (bufferedReader != null) bufferedReader.close();
+                if (fileReader != null) fileReader.close();
+            }
+        } catch (IOException ex) {
+            logger.severe("Failed to read from input..." + inputFile.getAbsolutePath());
+            ex.printStackTrace();
+            throw new IOException("Failed to read from input file " + inputFile.getAbsolutePath(), ex);
+        }
+    }
 }
