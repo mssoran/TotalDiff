@@ -4,16 +4,11 @@ import com.mss.totaldiff.filters.FilterForDirItem;
 import com.mss.totaldiff.filters.FilterForFileItem;
 import com.mss.totaldiff.filters.SimpleFilterForDirItem;
 import com.mss.totaldiff.filters.SimpleFilterForFileItem;
-import com.mss.totaldiff.visitors.FileSerializerVisitor;
 import com.mss.totaldiff.visitors.ItemVisitor;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.logging.Logger;
 
@@ -23,6 +18,8 @@ public class InfoTree {
     private DirItem root = new DirItem(-1, "root", null);
     private int itemCount = 0;
     private long totalProcessedFileSize = 0;
+    private long numberOfHashCalculations = 0;
+    private long numberOfHashLookups = 0;
     private LinkedList<FileItem> files = new LinkedList<>();
     private LinkedList<DirItem> dirs = new LinkedList<>();
     private HashMap<Integer, DirItem> dirsMap = new HashMap<>();
@@ -60,10 +57,45 @@ public class InfoTree {
         return dirItem;
     }
 
-    public void addToRoot(String dirName, Iterable<ItemVisitor> visitors) {
+    class LookupInfoTree {
+        InfoTree lookupInfoTree;
+        DirItem currentDir = null;
+
+        public LookupInfoTree(InfoTree aLookupInfoTree, String aInitialDirName) {
+            lookupInfoTree = aLookupInfoTree;
+            if (lookupInfoTree != null) {
+                currentDir = lookupInfoTree.dirsNameMap.get(lookupInfoTree.getNameMapKey(lookupInfoTree.root, aInitialDirName));
+            }
+        }
+
+        public DirItem updateCurrentDirTo(String dirName) {
+            if (currentDir == null || lookupInfoTree == null) return null;
+
+            DirItem prevDir = currentDir;
+            currentDir = lookupInfoTree.dirsNameMap.get(lookupInfoTree.getNameMapKey(currentDir, dirName));
+            return prevDir;
+        }
+
+        public void updateCurrentDirTo(DirItem dirItem) {
+            currentDir = dirItem;
+        }
+
+        public String getHashFor(FileItem fileItem) {
+            if (currentDir == null || lookupInfoTree == null) return null;
+
+            FileItem file = lookupInfoTree.filesNameMap.get(lookupInfoTree.getNameMapKey(currentDir, fileItem.name));
+            if (file != null && file.size == fileItem.size) {
+                return file.fileDigest;
+            }
+            return null;
+        }
+    }
+
+    public void addToRoot(String dirName, Iterable<ItemVisitor> visitors, InfoTree aLookupInfoTree) {
+        LookupInfoTree lookupInfoTree = new LookupInfoTree(aLookupInfoTree, dirName);
         DirItem dir = ensureDirItem(dirName, root, visitors);
         File dirFile = new File(dirName);
-        addTree(dir, dirFile, visitors);
+        addTree(dir, dirFile, visitors, lookupInfoTree);
     }
 
     private long lastReportTime = 0;
@@ -85,11 +117,11 @@ public class InfoTree {
             lastReportTime = now;
             lastReportSize = totalProcessedFileSize;
             lastReportCount = itemCount;
-            logger.info(String.format("itemCount:%d TotalProcessedFileSize:%s", itemCount, Utils.bytesToHumanReadable(totalProcessedFileSize)));
+            logger.info(String.format("itemCount:%d TotalProcessedFileSize:%s hash calculations:%s hash lookups:%s", itemCount, Utils.bytesToHumanReadable(totalProcessedFileSize), numberOfHashCalculations, numberOfHashLookups));
         }
     }
 
-    private void addTree(DirItem dirItem, File dirItemFile, Iterable<ItemVisitor> visitors) {
+    private void addTree(DirItem dirItem, File dirItemFile, Iterable<ItemVisitor> visitors, LookupInfoTree lookupInfoTree) {
         try {
             File[] allFilesInDir = dirItemFile.listFiles();
             if (allFilesInDir == null) {
@@ -108,12 +140,21 @@ public class InfoTree {
                     }
                     //find hash
                     if (config.compareHashes && isOkToAddFile(fileItem)) {
-                        fileItem.computeHash(f, config.fileReadBufferSize);
+                        String lookedUpHash = lookupInfoTree.getHashFor(fileItem);
+                        if (lookedUpHash == null) {
+                            numberOfHashCalculations++;
+                            fileItem.computeHash(f, config.fileReadBufferSize);
+                        } else {
+                            numberOfHashLookups++;
+                            fileItem.fileDigest = lookedUpHash;
+                        }
                     }
                     addFile(fileItem, visitors);
                 } else if (f.isDirectory()) {
                     DirItem dirItem1 = ensureDirItem(f.getName(), dirItem, visitors);
-                    addTree(dirItem1, f, visitors);
+                    DirItem lookupPrev = lookupInfoTree.updateCurrentDirTo(f.getName());
+                    addTree(dirItem1, f, visitors, lookupInfoTree);
+                    lookupInfoTree.updateCurrentDirTo(lookupPrev);
                 } else {
                     System.out.println("Log: Unknown file type, skipping... :" + f.getAbsolutePath());
                 }
@@ -180,6 +221,16 @@ public class InfoTree {
                 System.out.println(f.extractFileName() + " " + f);
             }
         }
+    }
+
+    public void logSummary() {
+        logger.info("--------- LogTree Summary:");
+        logger.info("itemCount: " + itemCount);
+        logger.info("totalProcessedFileSize: " + Utils.bytesToHumanReadable(totalProcessedFileSize));
+        logger.info("numberOfHashCalculations : " + numberOfHashCalculations );
+        logger.info("numberOfHashLookups : " + numberOfHashLookups );
+        logger.info("file count: " + files.size());
+        logger.info("dir count: " + dirs.size());
     }
 
     public void printAll() {

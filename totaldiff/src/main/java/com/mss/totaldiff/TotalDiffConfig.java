@@ -43,6 +43,8 @@ public class TotalDiffConfig {
 
     public int printTopCount = 4;
 
+    public boolean incrementalAddDirs = true;
+
     private static String[] cleanDirs(LinkedList<File> readDirs) {
         File[] rawDirs = readDirs.toArray(new File[0]);
         if (rawDirs.length == 0) return new String[0];
@@ -89,6 +91,8 @@ public class TotalDiffConfig {
             argIterator.updateBooleanValue("ignorePrintingNodesInSinglePath ", b -> ignorePrintingNodesInSinglePath = b);
             argIterator.updateStringValue("graphOutputFile", x -> graphOutputFile = x);
             argIterator.updateIntValue("printTopCount", x -> printTopCount = x);
+
+            argIterator.updateBooleanValue("incrementalAddDirs", b -> incrementalAddDirs = b);
 
             argIterator.updateStringArrayValue("dirs", d -> {
                 LinkedList<File> dirsList = new LinkedList<>();

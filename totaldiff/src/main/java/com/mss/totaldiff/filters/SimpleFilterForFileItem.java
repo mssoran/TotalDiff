@@ -2,7 +2,6 @@ package com.mss.totaldiff.filters;
 
 import com.mss.totaldiff.FileItem;
 import com.mss.totaldiff.TotalDiffConfig;
-import com.mss.totaldiff.filters.FilterForFileItem;
 
 public class SimpleFilterForFileItem implements FilterForFileItem {
     private TotalDiffConfig config;

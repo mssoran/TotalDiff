@@ -1,6 +1,5 @@
 package com.mss.totaldiff;
 
-import com.mss.totaldiff.visitors.FileSerializerVisitor;
 import com.mss.totaldiff.visitors.ItemVisitor;
 import com.mss.totaldiff.visitors.JsonSerializerVisitor;
 
@@ -38,13 +37,23 @@ public class DataCollector {
                 }
             }
 
-            // FileSerializerVisitor.addFromFile(inputFileName, visitors, infoTree);
-            JsonSerializerVisitor.addFromFile(inputFileName, visitors, infoTree);
+            InfoTree lookupInfoTree = null;
+            if (config.incrementalAddDirs) {
+                // If it's incremental, read from file, and add anything new from dirs
+                // FileSerializerVisitor.addFromFile(inputFileName, visitors, infoTree);
+                JsonSerializerVisitor.addFromFile(inputFileName, visitors, infoTree);
+            } else {
+                // If not incremental, then use the input file only for a shortcut. If any file
+                // already exists in the input file (path, name and size matches), we can
+                // reuse hash.
+                lookupInfoTree = new InfoTree(config);
+                JsonSerializerVisitor.addFromFile(inputFileName, new LinkedList<>(), lookupInfoTree);
+            }
 
             long startTime = System.nanoTime();
             for (String topDir : config.dirs) {
                 logger.info("Ready to add " + topDir);
-                infoTree.addToRoot(topDir, visitors);
+                infoTree.addToRoot(topDir, visitors, lookupInfoTree);
             }
             logger.info(String.format("Total time spend for adding dirs is %.3f sec", (double)(System.nanoTime() - startTime)/1_000_000_000));
         } finally {
@@ -53,6 +62,7 @@ public class DataCollector {
 
 
         logger.info("InfoTree is generated. Number of items:" + infoTree.itemCount());
+        infoTree.logSummary();
         //infoTree.printAll();
     }
 
