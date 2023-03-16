@@ -7,6 +7,7 @@ import com.mss.totaldiff.filters.SimpleFilterForFileItem;
 import com.mss.totaldiff.visitors.ItemVisitor;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -20,7 +21,6 @@ public class InfoTree {
     private long totalProcessedFileSize = 0;
     private long numberOfHashCalculations = 0;
     private long numberOfHashLookups = 0;
-    private LinkedList<FileItem> files = new LinkedList<>();
     private LinkedList<DirItem> dirs = new LinkedList<>();
     private HashMap<Integer, DirItem> dirsMap = new HashMap<>();
     private HashMap<String, DirItem> dirsNameMap = new HashMap<>();
@@ -85,10 +85,22 @@ public class InfoTree {
 
             FileItem file = lookupInfoTree.filesNameMap.get(lookupInfoTree.getNameMapKey(currentDir, fileItem.name));
             if (file != null && file.size == fileItem.size) {
-                return file.fileDigest;
+                // Here we can make the assumption that we'll not need this item anymore, so for
+                // using memory more efficiently, we can remove the file from the lookupInfoTree
+                // as much as possible
+                String digest = file.fileDigest;
+                lookupInfoTree.cleanup(file);
+                return digest;
             }
             return null;
         }
+    }
+
+    protected void cleanup(FileItem fileItem) {
+        // This doesn't release all the memory, but gives back at least some of the unused memory
+        filesNameMap.remove(getNameMapKey(fileItem));
+        fileItem.fileDigest = null;
+        fileItem.extension = null;
     }
 
     public void addToRoot(String dirName, Iterable<ItemVisitor> visitors, InfoTree aLookupInfoTree) {
@@ -197,7 +209,6 @@ public class InfoTree {
     private void addFile(FileItem fileItem, Iterable<ItemVisitor> visitors) {
         if (fileItem.id >= itemCount) itemCount = fileItem.id + 1;
         if (!isOkToAddFile(fileItem)) return;
-        files.addLast(fileItem);
         totalProcessedFileSize += fileItem.size;
         filesNameMap.put(getNameMapKey(fileItem), fileItem);
         for(ItemVisitor visitor : visitors) {
@@ -212,11 +223,11 @@ public class InfoTree {
     public void printFilesNotIn(InfoTree otherInfoTree) {
         HashSet<String> existingKeysInOther = new HashSet<>();
         // first find all keys
-        for (FileItem f: otherInfoTree.files) {
+        for (FileItem f: otherInfoTree.filesNameMap.values()) {
             existingKeysInOther.add(f.getKeyName());
         }
         // now print the diff
-        for (FileItem f: files) {
+        for (FileItem f: filesNameMap.values()) {
             if(!existingKeysInOther.contains(f.getKeyName())) {
                 System.out.println(f.extractFileName() + " " + f);
             }
@@ -229,7 +240,7 @@ public class InfoTree {
         logger.info("totalProcessedFileSize: " + Utils.bytesToHumanReadable(totalProcessedFileSize));
         logger.info("numberOfHashCalculations : " + numberOfHashCalculations );
         logger.info("numberOfHashLookups : " + numberOfHashLookups );
-        logger.info("file count: " + files.size());
+        logger.info("file count: " + filesNameMap.size());
         logger.info("dir count: " + dirs.size());
     }
 
@@ -240,12 +251,12 @@ public class InfoTree {
             System.out.println(String.format("%2d: under dir %d with name %s", dir.id, dir.parentDir.id, dir.name));
         }
         System.out.println("Files:");
-        for (FileItem f: files) {
+        for (FileItem f: filesNameMap.values()) {
             f.printLine();
         }
     }
 
-    public LinkedList<FileItem> getFiles() {
-        return files;
+    public Collection<FileItem> getFiles() {
+        return filesNameMap.values();
     }
 }
