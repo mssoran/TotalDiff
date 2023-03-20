@@ -155,7 +155,7 @@ public class InfoTree {
                         String lookedUpHash = lookupInfoTree.getHashFor(fileItem);
                         if (lookedUpHash == null) {
                             numberOfHashCalculations++;
-                            fileItem.computeHash(f, config.fileReadBufferSize);
+                            fileItem.computeHash(f, config.fileReadBufferSize, config.maxSizeForHashComparison);
                         } else {
                             numberOfHashLookups++;
                             fileItem.fileDigest = lookedUpHash;

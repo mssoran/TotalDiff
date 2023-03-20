@@ -113,24 +113,16 @@ public class DuplicatesAsEdgeGraphGenerator implements AnalyzeOutputGenerator {
         if (config.graphOutputFile == null || config.graphOutputFile.isEmpty()) return;
 
         HashMap<Integer, Node> filteredNodes = new HashMap<>();
-        LinkedList<Edge> filteredEdges = new LinkedList<>();
         HashMap<String, Edge> pathEdges = new HashMap<>();
 
-        // filter edges based on config values
-        for(Edge edge : edges.values()) {
-            if (edge.weight > config.weightThreshold) {
-                filteredEdges.addLast(edge);
-            }
-        }
-
         // find nodes
-        for (Edge edge : filteredEdges) {
+        for (Edge edge : edges.values()) {
             ensureFilteredNodes(edge.src.dirItem, filteredNodes);
             ensureFilteredNodes(edge.dst.dirItem, filteredNodes);
         }
 
         // add path edges
-        for (Edge edge : filteredEdges) {
+        for (Edge edge : edges.values()) {
             ensurePathEdges(edge.src.dirItem, filteredNodes, pathEdges, edge.duplicateSize);
             if (edge.src.dirItem.getId() != edge.dst.dirItem.getId()) {
                 ensurePathEdges(edge.dst.dirItem, filteredNodes, pathEdges, edge.duplicateSize);
@@ -154,7 +146,7 @@ public class DuplicatesAsEdgeGraphGenerator implements AnalyzeOutputGenerator {
                 }
 
                 // Write all duplicate filteredEdges
-                for (Edge edge : filteredEdges) {
+                for (Edge edge : edges.values()) {
                     bufferedWriter.write(String.format("n%d -> n%d [label=\"%d\", weight=%d, duplicateSizeMb=\"%d\"]", edge.src.dirItem.getId(), edge.dst.dirItem.getId(), edge.weight, edge.weight, edge.duplicateSize));
                     bufferedWriter.newLine();
                 }

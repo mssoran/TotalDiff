@@ -53,6 +53,10 @@ class ArgIterator implements Iterator<String> {
         return updateGenericValue(configName, f, s -> Integer.valueOf(s));
     }
 
+    public boolean updateLongValue(String configName, Consumer<Long> f) {
+        return updateGenericValue(configName, f, s -> Long.valueOf(s));
+    }
+
     public boolean updateStringValue(String configName, Consumer<String> f) {
         return updateGenericValue(configName, f, s -> s);
     }

@@ -122,7 +122,6 @@ public class LargeDirPrinter implements AnalyzeOutputGenerator {
 
         for (DuplicateInfo info : analyzer.getDuplicateMap().values()) {
             FileItem[] list = info.getFiles().toArray(new FileItem[0]);
-            if(list[0].size < config.weightThreshold) continue;
 
             DuplicateGroupNode duplicateGroupNode = ensureDuplicateNode(info);
             for (int i = 0; i < list.length; i++) {

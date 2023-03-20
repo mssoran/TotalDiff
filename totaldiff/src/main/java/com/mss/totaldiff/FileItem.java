@@ -52,13 +52,12 @@ public class FileItem extends FileItemBase {
         totalHashTimeNanos += (System.nanoTime() - startTime);
     }
 
-    public void computeHash(File file, int bufferSize) throws IOException, NoSuchAlgorithmException {
+    public void computeHash(File file, int bufferSize, long maxSize) throws IOException, NoSuchAlgorithmException {
         long startTime = System.nanoTime();
         byte[] buffer = new byte[bufferSize];
         byte[] hash = new byte[16];
         int hashIndex = 0;
         long totalReadSize = 0;
-        long maxSize = 8 * 1024 * 1024;
         int readSize;
         try (FileInputStream inputStream = new FileInputStream(file)) {
             readSize = inputStream.read(buffer);

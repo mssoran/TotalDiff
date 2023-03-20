@@ -24,7 +24,7 @@ public class DataCollector {
             // build visitors
             LinkedList<ItemVisitor> visitors = new LinkedList<>();
 
-            if (config.infoTreeOutputFileName != null && !config.infoTreeOutputFileName.isEmpty()) {
+            if (config.runningMode == TotalDiffConfig.RunningMode.BuildIndex && config.infoTreeOutputFileName != null && !config.infoTreeOutputFileName.isEmpty()) {
                 try {
                     File outputFile = new File(config.infoTreeOutputFileName);
                     if (!config.overwriteInfoTreeOutputFile && outputFile.exists())

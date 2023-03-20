@@ -120,7 +120,6 @@ public class DuplicatesAsNodeGraphGenerator implements AnalyzeOutputGenerator {
 
         for (DuplicateInfo info : analyzer.getDuplicateMap().values()) {
             FileItem[] list = info.getFiles().toArray(new FileItem[0]);
-            if(list[0].size < config.weightThreshold) continue;
 
             Node duplicateNode = ensureDuplicateNode(info);
             duplicateNode.singleSize += list[0].size;
