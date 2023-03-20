@@ -52,6 +52,8 @@ public class TotalDiffConfig {
 
     public boolean incrementalAddDirs = true;
 
+    public String interestedPath = null;
+
     private static String[] cleanDirs(LinkedList<File> readDirs) {
         File[] rawDirs = readDirs.toArray(new File[0]);
         if (rawDirs.length == 0) return new String[0];
@@ -139,6 +141,9 @@ public class TotalDiffConfig {
             .append("             See definition in buildindex\n")
             .append("       --considerDirExcludes=<dir list>\n")
             .append("             See definition in buildindex\n")
+            .append("       --interestedPath=<full path prefix>\n")
+            .append("             The output will include duplicates where at least one of the duplicated paths\n")
+            .append("             start with the given interestedPath.\n")
             .append("       --[no]printDuplicates\n")
             .append("             If true, outputs a human readable list of all the duplicated files found. Default\n")
             .append("             value is false.\n")
@@ -225,7 +230,7 @@ public class TotalDiffConfig {
 
             if (remainingArgCount == argIterator.getRemainingArgCount()) {
                 // This means I'm not able to consume the arg
-                throw new RuntimeException("Unknown argument, cannot consume argument '" + argIterator.peek() + "'");
+                throw new RuntimeException("Unknown argument, buildindex cannot consume argument '" + argIterator.peek() + "'");
             }
         }
     }
@@ -247,9 +252,11 @@ public class TotalDiffConfig {
             argIterator.updateStringValue("graphOutputFile", x -> graphOutputFile = x);
             argIterator.updateIntValue("printTopCount", x -> printTopCount = x);
 
+            argIterator.updateStringValue("interestedPath", x -> interestedPath = x);
+
             if (remainingArgCount == argIterator.getRemainingArgCount()) {
                 // This means I'm not able to consume the arg
-                throw new RuntimeException("Unknown argument, cannot consume argument '" + argIterator.peek() + "'");
+                throw new RuntimeException("Unknown argument, analyze cannot consume argument '" + argIterator.peek() + "'");
             }
         }
     }
@@ -268,7 +275,7 @@ public class TotalDiffConfig {
 
             if (remainingArgCount == argIterator.getRemainingArgCount()) {
                 // This means I'm not able to consume the arg
-                throw new RuntimeException("Unknown argument, cannot consume argument '" + argIterator.peek() + "'");
+                throw new RuntimeException("Unknown argument, diff cannot consume argument '" + argIterator.peek() + "'");
             }
         }
     }

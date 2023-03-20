@@ -12,8 +12,6 @@ public class LargeDirPrinter implements AnalyzeOutputGenerator {
 
     private class Node {
         public DirItem dirItem;
-        public LinkedList<DuplicateGroupNode> duplicates = new LinkedList<>();
-
         public long duplicateSize = 0;
         public int duplicateFileCount = 0;
         public int inpathCount = 0;
@@ -123,6 +121,15 @@ public class LargeDirPrinter implements AnalyzeOutputGenerator {
         for (DuplicateInfo info : analyzer.getDuplicateMap().values()) {
             FileItem[] list = info.getFiles().toArray(new FileItem[0]);
 
+            // if the duplicateInfo doesn't have any interested path, skip it.
+            boolean hasInterestedPath = config.interestedPath == null || config.interestedPath == "" || config.interestedPath == "/";
+            for (int i = 0; !hasInterestedPath && i < list.length; i++) {
+                if (list[i].extractFileName().startsWith(config.interestedPath)) {
+                    hasInterestedPath = true;
+                }
+            }
+            if (!hasInterestedPath) continue;
+
             DuplicateGroupNode duplicateGroupNode = ensureDuplicateNode(info);
             for (int i = 0; i < list.length; i++) {
                 FileItem fileItem = list[i];
@@ -141,10 +148,8 @@ public class LargeDirPrinter implements AnalyzeOutputGenerator {
                     }
                 }
                 node.duplicateFileCount ++;
-                node.duplicates.addLast(duplicateGroupNode);
             }
         }
-
     }
 
     public class GroupSavedSizeComparator implements Comparator<DuplicateGroupNode> {
