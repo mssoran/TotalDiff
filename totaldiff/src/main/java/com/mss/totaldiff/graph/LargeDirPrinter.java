@@ -210,12 +210,26 @@ public class LargeDirPrinter implements AnalyzeOutputGenerator {
                             // If prevNode is null, then we have to write this node, because this is a parent of duplicatenode
                             if (worthPrintingNode(node) || prevNode == null) {
                                 if (!printedNodeIds.contains(node.dirItem.getId())) {
-                                    bufferedWriter.write(String.format("n%d [label=\"%s\", duplicateSizeMb=%d, totalSize=%s, sizeRatio=%2.2f]",
+                                    double sizeRatio = ((double) node.duplicateSize) / node.dirItem.getTotalSize();
+                                    String color;
+                                    if ( node.duplicateSize == node.dirItem.getTotalSize()) {
+                                        // ratio is %100, use a special color
+                                        color = "#ff0000d0";
+                                    } else if (sizeRatio > 0.9) {
+                                        // linearly map (0.9, 1) into (0, 0xc0), so max alpha is 0xc0
+                                        color = String.format("#ff6600%02X", (int)((sizeRatio - 0.9) * 10 * 0xc0));
+                                    } else {
+                                        // use a different color
+                                        // linearly map (0, 0.9) into (0x20, 0xff), so min alpha is 0x20
+                                        color = String.format("#fac507%02X", (int)(0x20 + (sizeRatio/0.9) * 0xdf));
+                                    }
+                                    bufferedWriter.write(String.format("n%d [label=\"%s\", duplicateSizeMb=%d, totalSize=%s, sizeRatio=%2.2f, style=filled, color=\"%s\"]",
                                             node.dirItem.getId(),
                                             node.toLabel(),
                                             node.duplicateSize / 1024 / 1024,
                                             node.dirItem.getTotalSize() / 1024 / 1024,
-                                            ((double) node.duplicateSize) / node.dirItem.getTotalSize()
+                                            sizeRatio,
+                                            color
                                     ));
                                     bufferedWriter.newLine();
                                     printedNodeIds.add(node.dirItem.getId());
