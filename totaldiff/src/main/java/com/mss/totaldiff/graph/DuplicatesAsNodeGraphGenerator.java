@@ -49,7 +49,7 @@ public class DuplicatesAsNodeGraphGenerator implements AnalyzeOutputGenerator {
         if (node == null) {
             node = new Node(dirItem);
             nodes.put(key, node);
-            if (config.includePathInGraph && dirItem.getParentDir().getId() != -1) {
+            if (config.includePathInGraph && dirItem.getParentDir().notRoot()) {
                 ensurePathNode(dirItem.getParentDir());
             }
         }
@@ -109,6 +109,11 @@ public class DuplicatesAsNodeGraphGenerator implements AnalyzeOutputGenerator {
             edges.put(edgeKey, edge);
         }
         return edge;
+    }
+
+    @Override
+    public void processResult(DuplicatesGraph aDuplicatesGraph, TotalDiffConfig aConfig) {
+        throw new RuntimeException("not supported");
     }
 
     @Override
@@ -184,7 +189,7 @@ public class DuplicatesAsNodeGraphGenerator implements AnalyzeOutputGenerator {
                         DirItem parent = node.dirItem.getParentDir();
                         int weight = 1;
                         // find the first printed parent
-                        while (parent != null && parent.getId() != -1 && !printedNodeIds.contains(parent.getId())) {
+                        while (parent != null && parent.notRoot() && !printedNodeIds.contains(parent.getId())) {
                             parent = parent.getParentDir();
                             weight++;
                         }

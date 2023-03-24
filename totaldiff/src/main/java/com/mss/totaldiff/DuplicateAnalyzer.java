@@ -27,7 +27,7 @@ public class DuplicateAnalyzer {
             // calculate total size of all dirs
             f.addToTotalSize(f.size);
             DirItem dirItem = f.getParentDir();
-            while (dirItem.getId() != -1) {
+            while (dirItem.notRoot()) {
                 dirItem.addToTotalSize(f.size);
                 dirItem = dirItem.getParentDir();
             }

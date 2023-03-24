@@ -21,7 +21,6 @@ public class InfoTree {
     private long totalProcessedFileSize = 0;
     private long numberOfHashCalculations = 0;
     private long numberOfHashLookups = 0;
-    private LinkedList<DirItem> dirs = new LinkedList<>();
     private HashMap<Integer, DirItem> dirsMap = new HashMap<>();
     private HashMap<String, DirItem> dirsNameMap = new HashMap<>();
     private HashMap<String, FileItem> filesNameMap = new HashMap<>();
@@ -32,7 +31,6 @@ public class InfoTree {
     private FilterForDirItem filterForDirItem;
 
     public InfoTree(TotalDiffConfig aConfig) {
-        dirs.addLast(root);
         dirsMap.put(root.id, root);
         root.parentDir = root;
         config = aConfig;
@@ -188,7 +186,6 @@ public class InfoTree {
     private void addDir(DirItem dirItem, Iterable<ItemVisitor> visitors) {
         if (dirItem.id >= itemCount) itemCount = dirItem.id + 1;
         if (!filterForDirItem.isValidToConsider(dirItem) || dirItem.getParentDir() == null) return;
-        dirs.addLast(dirItem);
         dirsMap.put(dirItem.id, dirItem);
         dirsNameMap.put(getNameMapKey(dirItem), dirItem);
         for (ItemVisitor visitor : visitors) {
@@ -241,13 +238,13 @@ public class InfoTree {
         logger.info("numberOfHashCalculations : " + numberOfHashCalculations );
         logger.info("numberOfHashLookups : " + numberOfHashLookups );
         logger.info("file count: " + filesNameMap.size());
-        logger.info("dir count: " + dirs.size());
+        logger.info("dir count: " + dirsNameMap.size());
     }
 
     public void printAll() {
         System.out.println("Total item count:" + itemCount);
         System.out.println("Dirs:");
-        for (DirItem dir: dirs) {
+        for (DirItem dir: dirsNameMap.values()) {
             System.out.println(String.format("%2d: under dir %d with name %s", dir.id, dir.parentDir.id, dir.name));
         }
         System.out.println("Files:");

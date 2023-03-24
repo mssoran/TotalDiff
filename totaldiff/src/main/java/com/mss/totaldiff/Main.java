@@ -1,6 +1,7 @@
 package com.mss.totaldiff;
 
 import com.mss.totaldiff.graph.AnalyzeOutputGenerator;
+import com.mss.totaldiff.graph.DuplicatesGraph;
 import com.mss.totaldiff.graph.LargeDirPrinter;
 
 import java.io.FileInputStream;
@@ -66,7 +67,8 @@ public class Main {
                     //AnalyzeOutputGenerator gg = new DuplicatesAsNodeGraphGenerator();
                     AnalyzeOutputGenerator gg = new LargeDirPrinter();
 
-                    gg.processResult(analyzer, config);
+                    DuplicatesGraph duplicatesGraph = new DuplicatesGraph(analyzer, config);
+                    gg.processResult(duplicatesGraph, config);
                     gg.printOutput();
                     break;
                 default:

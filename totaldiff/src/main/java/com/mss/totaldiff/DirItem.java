@@ -8,6 +8,13 @@ public class DirItem extends FileItemBase{
         super(aId, aName, aParentDir);
     }
 
+    public boolean isRoot() {
+        return id == -1;
+    }
+    public boolean notRoot() {
+        return id != -1;
+    }
+
     @Override
     public void visitItem(ItemVisitor visitor) {
         visitor.processDirItem(this);

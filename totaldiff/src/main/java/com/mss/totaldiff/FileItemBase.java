@@ -24,7 +24,7 @@ public abstract class FileItemBase {
         LinkedList<String> path = new LinkedList<>();
         path.addFirst(name);
         DirItem nextDir = parentDir;
-        while (nextDir.getId() != -1) {
+        while (nextDir.notRoot()) {
             path.addFirst(nextDir.getName());
             nextDir = nextDir.getParentDir();
         }

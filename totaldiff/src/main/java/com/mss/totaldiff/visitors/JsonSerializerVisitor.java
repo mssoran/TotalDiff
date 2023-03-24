@@ -124,6 +124,43 @@ public class JsonSerializerVisitor implements ItemVisitor, Closeable {
         }
     }
 
+    private static void addFromJsonParser(JsonParser jsonParser, Iterable<ItemVisitor> visitors, InfoTree infoTree) throws IOException {
+        if (jsonParser.nextToken() != JsonToken.START_OBJECT) {
+            throw new IOException("Expected data to start with an Object");
+        }
+
+        while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+            String fieldName = jsonParser.getCurrentName();
+            if ("fileitems".equals(fieldName)) {
+                if (jsonParser.nextToken() != JsonToken.START_ARRAY) {
+                    System.out.println("Next token is :" + jsonParser.currentToken());
+                    throw new IOException("An array is expected");
+                }
+                while (jsonParser.nextToken() != JsonToken.END_ARRAY) {
+                    readFileItem(jsonParser, visitors, infoTree);
+                }
+            } else {
+                throw new IOException("Unknown json field");
+            }
+        }
+    }
+
+
+    public static void addFromString(String content, Iterable<ItemVisitor> visitors, InfoTree infoTree) throws IOException {
+        JsonFactory jsonFactory = JsonFactory.builder().build();
+        JsonParser jsonParser = jsonFactory.createParser(content);
+
+        try {
+            addFromJsonParser(jsonParser, visitors, infoTree);
+        } catch (IOException ex) {
+            logger.severe("Failed to read from input string content");
+            ex.printStackTrace();
+            throw ex;
+        } finally {
+            jsonParser.close();
+        }
+    }
+
     public static void addFromFile(String inputFileName, Iterable<ItemVisitor> visitors, InfoTree infoTree) throws IOException {
         if (inputFileName == null || inputFileName.isEmpty()) return;
         File inputFile = new File(inputFileName);
@@ -133,24 +170,7 @@ public class JsonSerializerVisitor implements ItemVisitor, Closeable {
         JsonParser jsonParser = jsonFactory.createParser(inputFile);
 
         try {
-            if (jsonParser.nextToken() != JsonToken.START_OBJECT) {
-                throw new IOException("Expected data to start with an Object");
-            }
-
-            while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
-                String fieldName = jsonParser.getCurrentName();
-                if ("fileitems".equals(fieldName)) {
-                    if (jsonParser.nextToken() != JsonToken.START_ARRAY) {
-                        System.out.println("Next token is :" + jsonParser.currentToken());
-                        throw new IOException("An array is expected");
-                    }
-                    while (jsonParser.nextToken() != JsonToken.END_ARRAY) {
-                        readFileItem(jsonParser, visitors, infoTree);
-                    }
-                } else {
-                    throw new IOException("Unknown json field");
-                }
-            }
+            addFromJsonParser(jsonParser, visitors, infoTree);
         } catch (IOException ex) {
             logger.severe("Failed to read from input..." + inputFile.getAbsolutePath());
             ex.printStackTrace();

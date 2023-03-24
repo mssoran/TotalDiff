@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo Run this command from your WORKSPACE directory:
+echo scripts/generate_coverage_report
+echo
+echo it will generate coverage report in generatedReports/coverage 
+echo and will open the report in the browser
+echo
+echo you need lcov installed for generating the report
+
+bazel coverage --combined_report=lcov //totaldiff:mytest
+
+genhtml --output generatedReports/coverage $(bazel info output_path)/_coverage/_coverage_report.dat
+
+open generatedReports/coverage/index.html

@@ -52,7 +52,7 @@ public class DuplicatesAsEdgeGraphGenerator implements AnalyzeOutputGenerator {
             node = new Node(fileItem);
             nodes.put(key, node);
         }
-        if (config.includePathInGraph && fileItem.getParentDir().getId() != -1) {
+        if (config.includePathInGraph && fileItem.getParentDir().notRoot()) {
             ensureNode(fileItem.getParentDir(), nodes);
         }
         return node;
@@ -85,7 +85,7 @@ public class DuplicatesAsEdgeGraphGenerator implements AnalyzeOutputGenerator {
         Node node = nodes.get(key);
         if (node == null) throw new RuntimeException("All nodes for all edges must exist in the graph!");
         filteredNodes.put(key, node);
-        if (config.includePathInGraph && dirItem.getParentDir().getId() != -1) {
+        if (config.includePathInGraph && dirItem.getParentDir().notRoot()) {
             ensureFilteredNodes(dirItem.getParentDir(), filteredNodes);
         }
     }
@@ -93,7 +93,7 @@ public class DuplicatesAsEdgeGraphGenerator implements AnalyzeOutputGenerator {
     private void ensurePathEdges(DirItem dirItem, HashMap<Integer, Node> filteredNodes, HashMap<String, Edge> pathEdges, long duplicateSize) {
 
         DirItem parentDirItem = dirItem.getParentDir();
-        if (parentDirItem.getId() == -1) return;
+        if (parentDirItem.isRoot()) return;
 
         Node src = filteredNodes.get(dirItem.getId());
         Node dst = filteredNodes.get(parentDirItem.getId());
@@ -169,6 +169,12 @@ public class DuplicatesAsEdgeGraphGenerator implements AnalyzeOutputGenerator {
         }
     }
 
+    @Override
+    public void processResult(DuplicatesGraph aDuplicatesGraph, TotalDiffConfig aConfig) {
+        throw new RuntimeException("not supported");
+    }
+
+    @Override
     public void processResult(DuplicateAnalyzer aAnalyzer, TotalDiffConfig aConfig) {
         analyzer = aAnalyzer;
         config = aConfig;
